@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #coding: utf-8
 
-from flask import Flask, request, Response, session, url_for, make_response, \
-    abort, redirect, g
+from flask import Flask, request, Response, session, url_for, \
+    abort, redirect, g, render_template
 from werkzeug.contrib.securecookie import SecureCookie
 from webim import User, Client, json
 
@@ -13,10 +13,16 @@ app.debug = True
 # ==============================================================================
 #  Configurations
 # ==============================================================================
-DOMAIN = 'localhost'
-APIKEY = 'public'
-HOST = '192.168.1.111'
-PORT = 8000
+CONFIG = {
+    'version' : '1.1',
+    'domain'  : 'localhost',
+    'apikey'  : 'public',
+    'host'    : '192.168.1.111',
+    'port'    : 8000,
+    'title'   : '在线支持',    
+    'theme'   : 'redmond',
+    'local'   : 'zh-CN',
+}
 
 
 # ==============================================================================
@@ -29,6 +35,18 @@ def load_user(uid):
         'status': 'available'
     }
 
+def load_history(me, to):
+    key = (me, to) if me < to else (to, me)
+    return HISTORIES.get(key, [])
+
+    
+def save_history(frm, to, value):
+    key = (frm, to) if frm < to else (to, frm)
+    if HISTORIES.has_key(key):
+        HISTORIES[key].append(value)
+    else:
+        HISTORIES[key] = [value]
+
 
 # ==============================================================================
 #  Test Data
@@ -38,10 +56,7 @@ BUDDIES = {
     'admin' : ['weet', 'demo'],
 }
 
-HISTORIES = {
-    # from ==> to : body
-    ('demo', 'admin') : [{"to":"admin","nick":"demo","from":"demo","style":"","body":"TEST-MSG","type":"unicast","timestamp":"1378721088952.9"}]
-}
+HISTORIES = {}
 
 
 # ==============================================================================
@@ -59,8 +74,8 @@ def prepare():
             
             user = load_user(g.uid)
             ticket = request.values.get('ticket', None)
-            g.client = Client(user, DOMAIN, APIKEY,
-                              ticket=ticket, host=HOST, port=PORT)
+            g.client = Client(user, CONFIG['domain'], CONFIG['apikey'],
+                              ticket=ticket, host=CONFIG['host'], port=CONFIG['port'])
         else:
             print '403.request.endpoint:', request.endpoint
             abort(403)
@@ -68,44 +83,64 @@ def prepare():
 
 @app.route('/')
 def index():
-    return 'ok'
+    return render_template('index.html')
 
 @app.route('/custom.js')
 def init():
-    path = '/'
-    ui_path = ''
+    domain = request.args.get('domain', CONFIG['domain'])
+    title  = request.args.get('title', CONFIG['title'])
+    theme  = request.args.get('theme', CONFIG['theme'])
+    local  = request.args.get('local', CONFIG['local'])
 
-    js = '''var _IMC = {{
-                production_name: 'dotnet',
-                version: '1.0',
-                path: '%s',
-                uiPath: '%s',
-                is_login: true,
-                user: '',
-                setting: '',
-                menu: '',
-                disable_chatlink: '',
-                enable_shortcut: '',
-                disable_menu: 'true',
-                theme: 'base',
-                local: 'zh-CN',
-                aspx: false,
-                min: """" //window.location.href.indexOf(""webim_debug"") != -1 ? """" : "".min""
-            }};
-            
-            _IMC.script = window.webim ? '' : ('<link href=""' + _IMC.uiPath + 'static/webim.'+ _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '"" media=""all"" type=""text/css"" rel=""stylesheet""/><link href=""' + _IMC.uiPath + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '"" media=""all"" type=""text/css"" rel=""stylesheet""/><script src=""' + _IMC.uiPath + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '"" type=""text/javascript""></script><script src=""' + _IMC.uiPath + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '"" type=""text/javascript""></script>');
-            _IMC.script += '<script src=""' + _IMC.uiPath + 'webim.js?' + _IMC.version + '"" type=""text/javascript""></script>';
-            document.write( _IMC.script ); ''' % (path, ui_path)
+    is_login = ''
+    user = '{}'
+    if hasattr(g, 'uid'):
+        is_login = '1'
+        user = json.dumps(load_user(g.uid))
+        
+    path = '/'
+
+    js = '''var _IMC = {
+        production_name: 'service',
+        version: '%(version)s',
+        domain: '%(domain)s',
+        path: '%(path)s',
+        is_login: '%(is_login)s',
+        user: %(user)s,
+        setting:{
+            play_sound: true,
+            minimize_layout: true,
+            buddy_sticky: true
+        },
+        disable_chatlink: '',
+        title: '%(title)s',
+        theme: '%(theme)s',
+        local: '%(local)s',
+        jsonp: '',
+        min: window.location.href.indexOf("webim_debug") != -1 ? "" : ".min"
+    };
+    
+    _IMC.script = window.webim ? '' : ('<link href="' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><link href="' + _IMC.path + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><script src="' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '" type="text/javascript"></script><script src="' + _IMC.path + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '" type="text/javascript"></script>');
+    _IMC.script += '<script src="' + _IMC.path + 'static/webim.js?' + _IMC.version + '" type="text/javascript"></script>';
+    document.write( _IMC.script );''' % {
+        'version'  : CONFIG['version'],
+        'domain'   : domain,
+        'path'     : path,
+        'is_login' : is_login,
+        'user'     : user,
+        'title'    : title,
+        'theme'    : theme,
+        'local'    : local,
+    }
     return Response(js, content_type='text/javascript')
     
 
 @app.route('/login', methods=('POST', 'GET'))
 def login():
-    username = request.values.get('username', '')
+    uid = request.values.get('username', '')
     password = request.values.get('password', '')
 
-    print 'username, password: ', username, password
-    uid = username
+    print '[ %s <--> %s ]' % (str(request.args), str(request.values))
     resp = Response(json.dumps({'status': 'ok'}))
     
     # New and save `uid` to cookie
@@ -121,6 +156,7 @@ def online():
     buddy_ids = request.values.get('buddy_ids', '')
     room_ids  = request.values.get('room_ids', '')
     show      = request.values.get('show', 'available')
+
     buddies = BUDDIES[g.uid]
     groups = []
 
@@ -140,6 +176,8 @@ def message():
     timestamp = request.values.get('timestamp')
     style     = ''
 
+    body = body.encode('utf8')
+
     value = {
         'to': to,
         'nick': g.uid,
@@ -149,12 +187,8 @@ def message():
         'timestamp': timestamp,
         'style': style
     }
-    key = (g.uid, to) if g.uid < to else (to, g.uid)
-    if HISTORIES.has_key(key):
-        HISTORIES[key].append(value)
-    else:
-        HISTORIES[key] = [value]
-        
+    save_history(g.uid, to, value)
+    
     return g.client.message(to, body, style, timestamp, msgtype=msgtype)
     
     
@@ -172,7 +206,7 @@ def status():
     return 'ok'
 
 #LATER:    
-@app.route('/logmsg')
+@app.route('/logmsg', methods=('POST', 'GET'))
 def logmsg():
     return 'ok'
 
@@ -181,9 +215,8 @@ def logmsg():
 def history():
     _id = request.values.get('id', None)
     _type = request.values.get('type', None)
-    
-    key = (g.uid, _id) if g.uid < _id else (_id, g.uid)
-    histories = HISTORIES.get(key, [])
+
+    histories = load_history(g.uid, _id)
     #LATER: from DB
     return json.dumps(histories)
 

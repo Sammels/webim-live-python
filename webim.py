@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+#coding: utf-8
 
 """
 python webim client
@@ -100,7 +100,7 @@ class Client:
                 'ticket': respdata['ticket'],
                 'mqttd' : respdata['mqttd'],
                 'websocket': respdata['websocket'],
-                'server': "http://%s:%d/packets" % (self.host, self.port),
+                'server': respdata['server']
             }
 
             rooms = []          #FIXME:
