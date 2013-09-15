@@ -4306,7 +4306,7 @@ plugin.add("chat","member",{
 		$.content.parentNode.insertBefore(member, $.content);
 	}
 });
-
+/*
 webimUI.chat.defaults.downloadHistory = true;
 plugin.add("chat","downloadHistory",{
 	init:function(e, ui){
@@ -4319,6 +4319,8 @@ plugin.add("chat","downloadHistory",{
 		ui.$.tools.appendChild(trigger);
 	}
 });
+*/
+  
 //
 /* ui.buddy:
 *

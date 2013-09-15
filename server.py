@@ -33,6 +33,10 @@ LOCATION_API_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip=%s'
 VISOTOR_NICK_PREFX = 'Guest-'
 VISITOR_COOKIE_AGE = 3600 * 24 * 7 # A week
 USER_COOKIE_AGE = 3600 * 24        # One day
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATE_FORMAT = '%Y-%m-%d'
+
+UNSUPPORTED_ENDPOINTS = ('download_history', 'settings') # Forbidden visitor user
 LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
                             'message', 'presence', 'status',
                             'history', 'members', 'join', 'leave',
@@ -51,8 +55,10 @@ LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
 @app.before_request
 def prepare():
 
+    if request.endpoint in UNSUPPORTED_ENDPOINTS:
+        abort(403)
+    
     data = request.cookies.get('auth', None)
-
     # For guest user
     if request.endpoint == 'index':
         if not data:
@@ -102,7 +108,7 @@ def index():
         # Save visotor to database
         env = request.environ
         ipaddr = env['REMOTE_ADDR']
-        signat = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        signat = datetime.now().strftime(TIME_FORMAT)
         referer = env.get('HTTP_REFERER', '')
         url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
                                             'path': env['PATH_INFO']}
@@ -338,12 +344,23 @@ def clear_history():
     db.clear_histories(g.uid, other)
     return 'ok'
 
-    
-'''
+
 @app.route('/download_history')
 def download_history():
-    return 'ok'
-'''
+    _id = request.values.get('id', None)
+    _type = request.values.get('type', 'unicast')
+    
+    now = datetime.now()
+    today = now.strftime(DATE_FORMAT)
+    records  = db.load_histories(_type, g.uid, _id)
+    messages = [ ( record['nick'], record['body'],
+                   datetime.fromtimestamp(float(record['timestamp'])/1000).strftime(TIME_FORMAT) )
+                 for record in records]
+    
+    resp = Response(render_template('histories.html', date=today, messages=messages))
+    resp.headers['Content-Disposition'] = 'attachment; filename="histories-%s.html"' % today
+    return resp
+
 
 @app.route('/settings', methods=('POST', 'GET'))
 def settings():
