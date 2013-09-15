@@ -60,17 +60,18 @@ def insert(table_name, columns, values):
         raise ValueError('insert() ==> len(columns) != len(values)')
         
     SQL = 'INSERT INTO {0}{1}({2}) VALUES({3})'.format(TABLE_PREFIX, table_name,
-                                                       ', '.join(['`%s`' for col in columns]), # column names
+                                                       ', '.join(['`{0}`'.format(col) for col in columns]), # column names
                                                        ', '.join(['%s']*len(values))) # values
     print 'insert() ==> SQL, values:', SQL, values
     execute(SQL, values)
     
 
 #### UPDATE ####
-def update(table_name, column_set, value_set, column_id, value_id):
-    SQL = 'UPDATE {0}{1} set `{2}`=%s where `{3}`=%s'.format(TABLE_PREFIX, table_name,
-                                                             column_set, column_id)
-    args = (value_set, value_id)
+def update(table_name, column_sets, value_sets, column_ids, value_ids):
+    SQL = 'UPDATE {0}{1} SET {2} WHERE {3}'.format(TABLE_PREFIX, table_name,
+                                                        ', '.join(['`{0}`=%s'.format(col) for col in column_sets]),
+                                                        ' AND '.join(['`{0}`=%s'.format(col) for col in column_ids]))
+    args = value_sets + value_ids
     print 'update() ==> SQL, args:', SQL, args
     execute(SQL, args)
 
@@ -95,6 +96,8 @@ def transaction(SQL_args_lst):
     
     cursor.close()
     conn.close()
+
+############################################################
 
     
 def load_record(table, column, value):
@@ -125,11 +128,20 @@ def load_groups(uid=None):
     
 def load_histories(msgtype, me, other):
     SQL = '''SELECT * FROM shop_webim_histories
-    WHERE `type`=%s AND ((`from`=%s AND `to`=%s) OR (`from`=%s AND `to`=%s))
+    WHERE `type`=%s AND ((`from`=%s AND `to`=%s AND `fromdel`=0) OR (`from`=%s AND `to`=%s AND `todel`=0))
     ORDER BY `timestamp` ASC
     LIMIT 20'''
     
     return load(SQL, (msgtype, me, other, other, me), fetch_one=False)
+
+
+def clear_histories(me, other):
+    update('histories',
+           ['fromdel'], ['1'],
+           ['from', 'to'], [me, other])
+    update('histories',
+           ['todel'], ['1'],
+           ['to', 'from'], [me, other])
     
 
 ## Insert ##

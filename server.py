@@ -30,7 +30,7 @@ CONFIG = {
     'local'   : 'zh-CN',
 }
 LOCATION_API_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip=%s'
-VISOTOR_NICK_PREFX = 'guest-'
+VISOTOR_NICK_PREFX = 'Guest-'
 VISITOR_COOKIE_AGE = 3600 * 24 * 7 # A week
 USER_COOKIE_AGE = 3600 * 24        # One day
 LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
@@ -75,7 +75,7 @@ def prepare():
             status = cookie.get('status', '')
 
             record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
-            print 'request.endpoint != "login" ==> record: ', record
+            print 'request.endpoint != "login" ==> user_record: ', record
             
             user = {
                 'id' : g.uid,
@@ -332,8 +332,10 @@ def rooms():
 def refresh():
     return 'ok'
 
-@app.route('/clear_history')
+@app.route('/clear_history', methods=('POST', 'GET'))
 def clear_history():
+    other = request.values.get('id', None)
+    db.clear_histories(g.uid, other)
     return 'ok'
 
     
