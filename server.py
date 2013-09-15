@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 #coding: utf-8
 
+import uuid
+import urllib2
+import json
+from datetime import datetime
+from werkzeug.contrib.securecookie import SecureCookie
 from flask import Flask, request, Response, session, url_for, \
     abort, redirect, g, render_template
-from werkzeug.contrib.securecookie import SecureCookie
-from webim import User, Client, json
+
+from webim import Client
+import db
 
 app = Flask(__name__)
 app.secret_key = 'public'
@@ -17,46 +23,26 @@ CONFIG = {
     'version' : '1.1',
     'domain'  : 'localhost',
     'apikey'  : 'public',
-    'host'    : '192.168.1.111',
-    'port'    : 8000,
+    'host'    : 'next.im',      # IM server host
+    'port'    : 8000,           # IM server port
     'title'   : '在线支持',    
     'theme'   : 'redmond',
     'local'   : 'zh-CN',
 }
-
+LOCATION_API_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip=%s'
+VISOTOR_NICK_PREFX = 'guest-'
+VISITOR_COOKIE_AGE = 3600 * 24 * 7 # A week
+USER_COOKIE_AGE = 3600 * 24        # One day
+LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
+                            'message', 'presence', 'status',
+                            'history', 'members', 'join', 'leave',
+                            'buddies', 'rooms', 'refresh',
+                            'clear_history', 'download_history',
+                            'settings', 'notifications')
 
 # ==============================================================================
 #  Help functions
 # ==============================================================================
-def load_user(uid):
-    return {
-        'id': uid,
-        'nick': uid,
-        'status': 'available'
-    }
-
-def load_history(me, to):
-    key = (me, to) if me < to else (to, me)
-    return HISTORIES.get(key, [])
-
-    
-def save_history(frm, to, value):
-    key = (frm, to) if frm < to else (to, frm)
-    if HISTORIES.has_key(key):
-        HISTORIES[key].append(value)
-    else:
-        HISTORIES[key] = [value]
-
-
-# ==============================================================================
-#  Test Data
-# ==============================================================================
-BUDDIES = {
-    'demo' : ['admin'],
-    'admin' : ['weet', 'demo'],
-}
-
-HISTORIES = {}
 
 
 # ==============================================================================
@@ -64,15 +50,39 @@ HISTORIES = {}
 # ==============================================================================
 @app.before_request
 def prepare():
-    if request.endpoint != 'login':
-        data = request.cookies.get('auth', None)
+
+    data = request.cookies.get('auth', None)
+
+    # For guest user
+    if request.endpoint == 'index':
+        if not data:
+            g.uid = uuid.uuid1().get_hex()
+            g.is_login = False
+        else:
+            cookie = SecureCookie.unserialize(data, app.secret_key)
+            g.uid = cookie.get('uid', None)
+            g.is_login = True
+        
+    elif request.endpoint in LOGIN_REQUIRED_ENDPOINTS:
         if data:
             # Get uid & ticket from cookie then new Client
             cookie = SecureCookie.unserialize(data, app.secret_key)
             g.cookie = cookie
             g.uid = cookie.get('uid', None)
+            g.is_login = True
+            g.is_guest = cookie.get('is_guest', None)
+            show = cookie.get('show', 'available')
+            status = cookie.get('status', '')
+
+            record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
+            print 'request.endpoint != "login" ==> record: ', record
             
-            user = load_user(g.uid)
+            user = {
+                'id' : g.uid,
+                'nick': record['nick'].encode('utf8'),
+                'show': show,
+                'status' : status
+            }
             ticket = request.values.get('ticket', None)
             g.client = Client(user, CONFIG['domain'], CONFIG['apikey'],
                               ticket=ticket, host=CONFIG['host'], port=CONFIG['port'])
@@ -83,10 +93,37 @@ def prepare():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    ''' For guest user '''
+    
+    resp = Response(render_template('index.html'))
+    
+    # Login for guest user
+    if not g.is_login:
+        # Save visotor to database
+        env = request.environ
+        ipaddr = env['REMOTE_ADDR']
+        signat = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        referer = env.get('HTTP_REFERER', '')
+        url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
+                                            'path': env['PATH_INFO']}
+        loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
+        loc_json = json.loads(loc_str)
+        loc_data = loc_json['data']
+        location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
+        db.add_visitor(g.uid, VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
 
+        # Save uid to cookie
+        cookie = SecureCookie(secret_key=app.secret_key)
+        cookie['uid'] = g.uid
+        cookie['is_guest'] = True
+        cookie.save_cookie(resp, key='auth', max_age=VISITOR_COOKIE_AGE)
+    
+    return resp
+
+    
 @app.route('/custom.js')
 def init():
+    ''' For guest user '''
     domain = request.args.get('domain', CONFIG['domain'])
     title  = request.args.get('title', CONFIG['title'])
     theme  = request.args.get('theme', CONFIG['theme'])
@@ -96,7 +133,14 @@ def init():
     user = '{}'
     if hasattr(g, 'uid'):
         is_login = '1'
-        user = json.dumps(load_user(g.uid))
+        record = db.load_visitor(g.uid)
+        user = {
+            'id' : g.uid,
+            'nick': record['nick'],
+            'show': 'available',
+            'status' : ''
+        }
+        user = json.dumps(user)
         
     path = '/'
 
@@ -137,17 +181,28 @@ def init():
 
 @app.route('/login', methods=('POST', 'GET'))
 def login():
-    uid = request.values.get('username', '')
+    username = request.values.get('username', '')
     password = request.values.get('password', '')
 
     print '[ %s <--> %s ]' % (str(request.args), str(request.values))
-    resp = Response(json.dumps({'status': 'ok'}))
+
+    ret_data = {}
+    is_login = db.check_user(username, password)
+    if is_login:
+        ret_data['status'] = 'ok'
+    else:
+        ret_data['status'] = 'error'
+        ret_data['message'] = 'Username or password is wrong!'
+        
+    resp = Response(json.dumps(ret_data))
     
-    # New and save `uid` to cookie
-    cookie = SecureCookie(secret_key=app.secret_key)
-    cookie['uid'] = uid
-    cookie.save_cookie(resp, key='auth', max_age=3600*24)
-    
+    if is_login:
+        # New and save `uid` to cookie
+        cookie = SecureCookie(secret_key=app.secret_key)
+        cookie['uid'] = username
+        cookie['is_guest'] = False
+        cookie.save_cookie(resp, key='auth', max_age=USER_COOKIE_AGE)
+        
     return resp
     
 
@@ -157,10 +212,13 @@ def online():
     room_ids  = request.values.get('room_ids', '')
     show      = request.values.get('show', 'available')
 
-    buddies = BUDDIES[g.uid]
-    groups = []
+    buddies = db.load_buddies() if g.is_guest else []
+    groups = db.load_groups() if g.is_guest else []
 
-    return g.client.online(buddies, groups, show)
+    ret = g.client.online(buddies, groups, show)
+    resp = Response(ret)
+    
+    return resp
     
     
 @app.route('/offline', methods=('POST', 'GET'))
@@ -171,24 +229,22 @@ def offline():
 @app.route('/message', methods=('POST', 'GET'))
 def message():
     msgtype   = request.values.get('type')
+    frm_nick  = request.values.get('nick')
     to        = request.values.get('to')
+    to_nick   = request.values.get('to_nick')
     body      = request.values.get('body')
     timestamp = request.values.get('timestamp')
     style     = ''
 
-    body = body.encode('utf8')
-
-    value = {
-        'to': to,
-        'nick': g.uid,
-        'from': g.uid,
-        'body': body,
-        'type': msgtype,
-        'timestamp': timestamp,
-        'style': style
-    }
-    save_history(g.uid, to, value)
+    print 'message.timestamp:', type(timestamp), timestamp
+    visitor_id, user_id = (g.uid, to) if g.is_guest else (to, g.uid)
+        
+    db.add_message(msgtype,
+                   visitor_id, user_id,
+                   g.uid, frm_nick, to, to_nick,
+                   body, style, timestamp)
     
+    body = body.encode('utf8')
     return g.client.message(to, body, style, timestamp, msgtype=msgtype)
     
     
@@ -196,8 +252,13 @@ def message():
 def presence():
     show   = request.values.get('show')
     status = request.values.get('status')
+
+    resp = Response(g.client.presence(show, status=status))
+    g.cookie['show'] = show
+    g.cookie['status'] = status
+    g.cookie.save_cookie(resp, key='auth')
     
-    return g.client.presence(show, status=status)
+    return resp
 
 
 #LATER:
@@ -216,8 +277,20 @@ def history():
     _id = request.values.get('id', None)
     _type = request.values.get('type', None)
 
-    histories = load_history(g.uid, _id)
-    #LATER: from DB
+    records = db.load_histories(_type, g.uid, _id)
+    # {to:36, nick:admin, from:admin,
+    #  style:, body:s, type:multicast, timestamp:1378721089104}
+    #                                            1379157005.473486
+    #                                            1379168616106.0
+    histories = [{'to': record['to'],
+                  'nick': record['nick'],
+                  'from':record['from'],
+                  'style': record['style'],
+                  'type': record['type'],
+                  'body': record['body'],
+                  'timestamp': str(record['timestamp'])}
+                 for record in records]
+    
     return json.dumps(histories)
 
 
@@ -245,7 +318,8 @@ def buddies():
     buddies = []
     # LATER:
     for _id in ids.split(','):
-        buddies.append({'id': _id, 'nick': _id.upper()})
+        record = db.load_user(_id) if g.is_guest else db.load_visitor(_id)
+        buddies.append({'id': _id, 'nick': record['nick']})
     return json.dumps(buddies)
 
     
@@ -280,4 +354,4 @@ def notifications():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6666)
+    app.run(host='0.0.0.0', port=8888)

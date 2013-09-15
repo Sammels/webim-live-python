@@ -37,10 +37,8 @@ try:
 except ImportError:
     import simplejson as json
 
-import socket
 import urllib
 import urllib2
-import datetime
 
 class WebIMError(Exception):
     pass
@@ -103,7 +101,6 @@ class Client:
                 'server': respdata['server']
             }
 
-            rooms = []          #FIXME:
             loaded_buddies = respdata['buddies']
             for b in loaded_buddies:
                 b['id'] = b['name']
