@@ -5,6 +5,7 @@ import uuid
 import urllib2
 import json
 from datetime import datetime
+
 from werkzeug.contrib.securecookie import SecureCookie
 from flask import Flask, request, Response, session, url_for, \
     abort, redirect, g, render_template
@@ -44,9 +45,7 @@ LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
                             'clear_history', 'download_history',
                             'settings', 'notifications')
 
-# ==============================================================================
-#  Help functions
-# ==============================================================================
+
 
 
 # ==============================================================================

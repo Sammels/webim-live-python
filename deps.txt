@@ -1,2 +1,5 @@
+MySQL-python
 flask
-mysqldb
+supervisor
+gevent
+gunicorn

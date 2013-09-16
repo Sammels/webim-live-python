@@ -207,6 +207,7 @@ class Client:
         
         if params is not None:
             params.update(self.reqdata_base)
+            print 'GET.url:', url
             print 'GET.params: ', params
             url += "?" + urllib.urlencode(params)
             try:
@@ -225,7 +226,8 @@ class Client:
         try:
             if __debug__: print "POST %s" % url
             data.update(self.reqdata_base)
-            print 'POST.data: ', data
+            print 'POST.url:', url
+            print 'POST.data:', data
             resp = urllib2.urlopen(url, urllib.urlencode(data), self.timeout)
             body = resp.read()
             if __debug__: print body

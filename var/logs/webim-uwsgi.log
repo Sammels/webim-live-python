@@ -1,0 +1,92 @@
+[uWSGI] getting YAML configuration from /home/weet/GitHub/webim-python/etc/uwsgi.yaml
+[uwsgi-static] added mapping for /static => /home/weet/GitHub/webim-python/static
+open("/home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log"): Permission denied [core/logging.c line 304]
+[uWSGI] getting YAML configuration from /home/weet/GitHub/webim-python/etc/uwsgi.yaml
+[uwsgi-static] added mapping for /static => /home/weet/GitHub/webim-python/static
+open("/home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log"): Permission denied [core/logging.c line 304]
+[uWSGI] getting YAML configuration from /home/weet/GitHub/webim-python/etc/uwsgi.yaml
+[uwsgi-static] added mapping for /static => /home/weet/GitHub/webim-python/static
+open("/home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log"): Permission denied [core/logging.c line 304]
+[uWSGI] getting YAML configuration from /home/weet/GitHub/webim-python/etc/uwsgi.yaml
+[uwsgi-static] added mapping for /static => /home/weet/GitHub/webim-python/static
+open("/home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log"): Permission denied [core/logging.c line 304]
+*** Starting uWSGI 1.9.16 (64bit) on [Mon Sep 16 08:26:01 2013] ***
+compiled with version: 4.6.3 on 16 September 2013 07:59:56
+os: Linux-3.8.0-29-generic #42~precise1-Ubuntu SMP Wed Aug 14 16:19:23 UTC 2013
+nodename: localhost
+machine: x86_64
+clock source: unix
+detected number of CPU cores: 1
+current working directory: /home/weet/GitHub/webim-python
+detected binary path: /usr/local/bin/uwsgi
+!!! no internal routing support, rebuild with pcre support !!!
+uWSGI running as root, you can use --uid/--gid/--chroot options
+*** WARNING: you are running uWSGI as root !!! (use the --uid flag) *** 
+your processes number limit is 5792
+your memory page size is 4096 bytes
+detected max file descriptor number: 1024
+building mime-types dictionary from file /etc/mime.types...530 entry found
+lock engine: pthread robust mutexes
+thunder lock: disabled (you can enable it with --thunder-lock)
+uwsgi socket 0 bound to UNIX address /tmp/uwsgi-chat.sock fd 3
+Python version: 2.7.3 (default, Apr 10 2013, 06:31:07)  [GCC 4.6.3]
+[uWSGI] getting YAML configuration from /home/weet/GitHub/webim-python/etc/uwsgi.yaml
+[uwsgi-static] added mapping for /static => /home/weet/GitHub/webim-python/static
+Python main interpreter initialized at 0x804540
+python threads support enabled
+your server socket listen backlog is limited to 100 connections
+your mercy for graceful operations on workers is 60 seconds
+mapped 1491696 bytes (1456 KB) for 80 cores
+*** Operational MODE: preforking+threaded ***
+added /usr/local/lib/python2.7/dist-packages/ to pythonpath.
+added /home/weet/GitHub/webim-python/ to pythonpath.
+WSGI app 0 (mountpoint='') ready in 1 seconds on interpreter 0x804540 pid: 7341 (default app)
+*** uWSGI is running in multiple interpreter mode ***
+spawned uWSGI master process (pid: 7341)
+spawned uWSGI worker 1 (pid: 7350, cores: 10)
+spawned uWSGI worker 2 (pid: 7351, cores: 10)
+spawned uWSGI worker 3 (pid: 7370, cores: 10)
+spawned uWSGI worker 4 (pid: 7371, cores: 10)
+spawned uWSGI worker 5 (pid: 7372, cores: 10)
+spawned uWSGI worker 6 (pid: 7373, cores: 10)
+spawned uWSGI worker 7 (pid: 7374, cores: 10)
+spawned uWSGI worker 8 (pid: 7375, cores: 10)
+[pid: 7375|app: 0|req: 1/1] 192.168.1.106 () {40 vars in 1321 bytes} [Mon Sep 16 08:26:05 2013] GET / => generated 233 bytes in 21 msecs (HTTP/1.1 200) 2 headers in 80 bytes (1 switches on core 0)
+request.endpoint != "login" ==> user_record:  {'uid': None, 'url': u'http://chat.next.im/', 'ipaddr': u'192.168.1.106', 'location': u'\u672a\u5206\u914d\u6216\u8005\u5185\u7f51IP', 'nick': u'Guest-49', 'signat': datetime.datetime(2013, 9, 16, 6, 43, 41), 'referer': u'', 'eid': 10000L, 'id': 49L, 'name': u'44e7c3be1e5811e3b8fc08002780b5a3'}
+[pid: 7375|app: 0|req: 2/2] 192.168.1.106 () {42 vars in 1315 bytes} [Mon Sep 16 08:26:05 2013] GET /custom.js => generated 1370 bytes in 10 msecs (HTTP/1.1 200) 2 headers in 72 bytes (1 switches on core 6)
+[pid: 7375|app: 0|req: 2/3] 192.168.1.106 () {46 vars in 1490 bytes} [Mon Sep 16 08:26:05 2013] GET /static/webim.service.min.css?1.1 => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 5)
+[pid: 7351|app: 0|req: -1/4] 192.168.1.106 () {46 vars in 1515 bytes} [Mon Sep 16 08:26:06 2013] GET /static/themes/redmond/jquery.ui.theme.css?1.1 => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7373|app: 0|req: -1/5] 192.168.1.106 () {46 vars in 1473 bytes} [Mon Sep 16 08:26:06 2013] GET /static/webim.service.min.js?1.1 => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7373|app: 0|req: -1/6] 192.168.1.106 () {46 vars in 1470 bytes} [Mon Sep 16 08:26:06 2013] GET /static/i18n/webim-zh-CN.js?1.1 => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 1)
+[pid: 7373|app: 0|req: -1/7] 192.168.1.106 () {46 vars in 1448 bytes} [Mon Sep 16 08:26:06 2013] GET /static/webim.js?1.1 => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 3)
+request.endpoint != "login" ==> user_record:  {'uid': None, 'url': u'http://chat.next.im/', 'ipaddr': u'192.168.1.106', 'location': u'\u672a\u5206\u914d\u6216\u8005\u5185\u7f51IP', 'nick': u'Guest-49', 'signat': datetime.datetime(2013, 9, 16, 6, 43, 41), 'referer': u'', 'eid': 10000L, 'id': 49L, 'name': u'44e7c3be1e5811e3b8fc08002780b5a3'}
+POST http://next.im:8000/v5/presences/online
+POST.url: http://next.im:8000/v5/presences/online
+POST.data: {'status': '', 'domain': 'localhost', 'apikey': 'public', 'name': '44e7c3be1e5811e3b8fc08002780b5a3', 'show': u'available', 'buddies': u'admin,erylee,hidden,weiyue,jason', 'nick': 'Guest-49', 'version': 'v5', 'groups': '', 'ticket': None}
+{"success":true,"ticket":"uid:44e7c3be1e5811e3b8fc08002780b5a3:50f21f079b298bd0b5b0","server":"http://next.im:8000/v5/packets","jsonpd":"http://next.im:8000/v5/packets","websocket":"ws://next.im:8000/v5/wsocket","mqttd":"next.im:8883","groups":[],"buddies":[]}
+online.respdata:  {u'mqttd': u'next.im:8883', u'websocket': u'ws://next.im:8000/v5/wsocket', u'success': True, u'buddies': [], u'server': u'http://next.im:8000/v5/packets', u'jsonpd': u'http://next.im:8000/v5/packets', u'groups': [], u'ticket': u'uid:44e7c3be1e5811e3b8fc08002780b5a3:50f21f079b298bd0b5b0'}
+=========
+[pid: 7350|app: 0|req: 1/8] 192.168.1.106 () {50 vars in 1565 bytes} [Mon Sep 16 08:26:06 2013] POST /online?domain=localhost => generated 413 bytes in 28 msecs (HTTP/1.1 200) 2 headers in 80 bytes (1 switches on core 0)
+[pid: 7375|app: 0|req: 3/9] 192.168.1.106 () {38 vars in 1252 bytes} [Mon Sep 16 08:26:06 2013] GET /favicon.ico => generated 233 bytes in 20 msecs (HTTP/1.1 404) 2 headers in 72 bytes (1 switches on core 1)
+[pid: 7375|app: 0|req: 3/10] 192.168.1.106 () {42 vars in 1410 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/smile.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 4)
+[pid: 7370|app: 0|req: -1/11] 192.168.1.106 () {42 vars in 1418 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/smile-big.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 0)
+[pid: 7375|app: 0|req: 3/12] 192.168.1.106 () {42 vars in 1406 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/sad.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 9)
+[pid: 7371|app: 0|req: -1/13] 192.168.1.106 () {42 vars in 1408 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/wink.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7371|app: 0|req: -1/14] 192.168.1.106 () {42 vars in 1412 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/tongue.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7371|app: 0|req: -1/15] 192.168.1.106 () {42 vars in 1410 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/shock.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7350|app: 0|req: 1/16] 192.168.1.106 () {42 vars in 1408 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/kiss.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 5)
+[pid: 7350|app: 0|req: 1/17] 192.168.1.106 () {42 vars in 1424 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/glasses-cool.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 6)
+[pid: 7350|app: 0|req: 1/18] 192.168.1.106 () {42 vars in 1422 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/embarrassed.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 7)
+request.endpoint != "login" ==> user_record:  {'uid': None, 'url': u'http://chat.next.im/', 'ipaddr': u'192.168.1.106', 'location': u'\u672a\u5206\u914d\u6216\u8005\u5185\u7f51IP', 'nick': u'Guest-49', 'signat': datetime.datetime(2013, 9, 16, 6, 43, 41), 'referer': u'', 'eid': 10000L, 'id': 49L, 'name': u'44e7c3be1e5811e3b8fc08002780b5a3'}
+[pid: 7350|app: 0|req: 2/19] 192.168.1.106 () {44 vars in 1492 bytes} [Mon Sep 16 08:26:06 2013] GET /buddies?_=1379331993527&ids=admin => generated 47 bytes in 6 msecs (HTTP/1.1 200) 2 headers in 79 bytes (2 switches on core 8)
+request.endpoint != "login" ==> user_record:  {'uid': None, 'url': u'http://chat.next.im/', 'ipaddr': u'192.168.1.106', 'location': u'\u672a\u5206\u914d\u6216\u8005\u5185\u7f51IP', 'nick': u'Guest-49', 'signat': datetime.datetime(2013, 9, 16, 6, 43, 41), 'referer': u'', 'eid': 10000L, 'id': 49L, 'name': u'44e7c3be1e5811e3b8fc08002780b5a3'}
+[pid: 7375|app: 0|req: 4/20] 192.168.1.106 () {44 vars in 1516 bytes} [Mon Sep 16 08:26:06 2013] GET /history?_=1379331993528&type=unicast&id=admin => generated 355 bytes in 5 msecs (HTTP/1.1 200) 2 headers in 80 bytes (1 switches on core 9)
+[pid: 7375|app: 0|req: 4/21] 192.168.1.106 () {42 vars in 1412 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/crying.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 8)
+[pid: 7371|app: 0|req: -1/22] 192.168.1.106 () {42 vars in 1416 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/thinking.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (0 switches on core 0)
+[pid: 7350|app: 0|req: 2/23] 192.168.1.106 () {42 vars in 1410 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/angel.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 9)
+[pid: 7350|app: 0|req: 2/24] 192.168.1.106 () {42 vars in 1420 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/shut-mouth.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 3)
+[pid: 7350|app: 0|req: 2/25] 192.168.1.106 () {42 vars in 1420 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/moneymouth.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 2)
+[pid: 7350|app: 0|req: 2/26] 192.168.1.106 () {42 vars in 1426 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/foot-in-mouth.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 1)
+[pid: 7350|app: 0|req: 2/27] 192.168.1.106 () {42 vars in 1410 bytes} [Mon Sep 16 08:26:06 2013] GET /static/images/emot/default/shout.png => generated 0 bytes in 0 msecs (HTTP/1.1 304) 0 headers in 29 bytes (1 switches on core 4)
+[pid: 7350|app: 0|req: 3/28] 192.168.1.106 () {38 vars in 1252 bytes} [Mon Sep 16 08:26:06 2013] GET /favicon.ico => generated 233 bytes in 11 msecs (HTTP/1.1 404) 2 headers in 72 bytes (2 switches on core 0)
+[pid: 7375|app: 0|req: 4/29] 192.168.1.106 () {40 vars in 1341 bytes} [Mon Sep 16 08:26:07 2013] GET /static/assets/sound.swf?_1379331995091 => generated 531 bytes in 0 msecs via sendfile() (HTTP/1.1 200) 3 headers in 131 bytes (0 switches on core 8)
