@@ -126,7 +126,7 @@ def index():
     return resp
 
     
-@app.route('/custom.js')
+@app.route('/run.js')
 def init():
     ''' For guest user '''
     domain = request.args.get('domain', CONFIG['domain'])
