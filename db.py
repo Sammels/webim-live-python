@@ -117,9 +117,9 @@ def check_user(username, password):
 
     
 def load_buddies(uid=None):
-    SQL = 'SELECT login FROM shop_webim_users'
-    records = load(SQL, None, fetch_one=False, cursor_type=CURSORS['normal'])
-    return [record[0] for record in records]
+    SQL = 'SELECT login, email FROM shop_webim_users'
+    records = load(SQL, None, fetch_one=False, cursor_type=CURSORS['dict'])
+    return records
 
     
 def load_groups(uid=None):

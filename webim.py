@@ -31,6 +31,8 @@ __copyright__ = "Copyright (C) 2013 Ery Lee"
 __license__   = "Python Software Foundation License"
 
 APIVSN = 'v5'
+AVATAR_SIZE = 50
+GRAVATAR_DEFAULT_URL = 'http://www.gravatar.com/avatar/00000000000000000000000000000000?s=' + AVATAR_SIZE
 
 try:
     import json
@@ -39,6 +41,7 @@ except ImportError:
 
 import urllib
 import urllib2
+import hashlib
 
 class WebIMError(Exception):
     pass
@@ -51,6 +54,15 @@ class User:
         self.show = show
         self.status = status
 
+def gravatar_url(email):
+    if len(email.strip()) == 0:
+        return GRAVATAR_DEFAULT_URL
+        
+    url = "http://www.gravatar.com/avatar/" + hashlib.md5(email.lower()).hexdigest() + "?"
+    url += urllib.urlencode({'s':str(AVATAR_SIZE)})
+    return url
+
+    
 class Client:
     
     def __init__(self, user, domain, apikey,
@@ -74,9 +86,16 @@ class Client:
         """
         Client online
         """
+        buddy_ids = []
+        buddy_dict = {}
+        for b in buddies:
+            login = b['login']
+            buddy_ids.append(login)
+            buddy_dict[login] = b
+            
         reqdata = {
             'groups': ','.join(groups),
-            'buddies': ','.join(buddies),
+            'buddies': ','.join(buddy_ids),
             'name': self.user['id'],
             'nick': self.user['nick'],
             'status': self.user['status'],
@@ -103,7 +122,12 @@ class Client:
 
             loaded_buddies = respdata['buddies']
             for b in loaded_buddies:
-                b['id'] = b['name']
+                uid = b['name']
+                b['id'] = uid
+                email = buddy_dict[uid]['email']
+                b['pic_url'] = gravatar_url(email)
+                b['default_pic_url'] = GRAVATAR_DEFAULT_URL
+                
             return json.dumps({'success': True,
                                'connection': conninfo,
                                'buddies': loaded_buddies,

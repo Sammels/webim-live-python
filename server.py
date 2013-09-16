@@ -86,7 +86,9 @@ def prepare():
                 'id' : g.uid,
                 'nick': record['nick'].encode('utf8'),
                 'show': show,
-                'status' : status
+                'status' : status,
+                'pic_url': 'http://www.gravatar.com/avatar/?s=50',
+                'default_pic_url': 'http://www.gravatar.com/avatar/?s=50'
             }
             ticket = request.values.get('ticket', None)
             g.client = Client(user, CONFIG['domain'], CONFIG['apikey'],
