@@ -1,0 +1,13 @@
+uwsgi: 
+  pythonpath   : /usr/local/lib/python2.7/dist-packages/
+  pythonpath   : /home/weet/GitHub/webim-python
+  socket       : /tmp/uwsgi-chat.sock
+  chmod-socket : 666
+  callable     : app
+  master       : true
+  module       : server
+  workers      : 8
+  threads      : 10
+  idle         : 1800
+  logto        : /home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log
+  static-map   : /static=/home/weet/GitHub/webim-python/static
