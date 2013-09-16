@@ -32,7 +32,7 @@ __license__   = "Python Software Foundation License"
 
 APIVSN = 'v5'
 AVATAR_SIZE = 50
-GRAVATAR_DEFAULT_URL = 'http://www.gravatar.com/avatar/00000000000000000000000000000000?s=' + AVATAR_SIZE
+GRAVATAR_DEFAULT_URL = 'http://www.gravatar.com/avatar/00000000000000000000000000000000?s=' + str(AVATAR_SIZE)
 
 try:
     import json
