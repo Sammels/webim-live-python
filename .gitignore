@@ -1,5 +1,7 @@
 *~
 *.swp
 *.pyc
+*.log
 *#
 shopim2_2013-09-13.sql
+venv

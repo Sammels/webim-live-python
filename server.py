@@ -347,7 +347,7 @@ def clear_history():
 @app.route('/download_history')
 def download_history():
     _id = request.values.get('id', None)
-    _type = request.values.get('type', 'unicast')
+    _type = request.values.get('type', 'chat')
     
     now = datetime.now()
     today = now.strftime(DATE_FORMAT)

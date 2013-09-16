@@ -130,7 +130,7 @@ class Client:
         _status, body = self._httpost('/presences/show', reqdata)
         return body
 
-    def message(self, to, body, style, timestamp, msgtype='unicast'):
+    def message(self, to, body, style, timestamp, msgtype='chat'):
         """
         Send Message
         """

@@ -195,7 +195,7 @@ def test_load_record():
 def test_load_histories():
     print 'test_load_histories'
     import json
-    print json.dumps(load_histories('unicast', 'admin', '52050b0b1848c'))
+    print json.dumps(load_histories('chat', 'admin', '52050b0b1848c'))
 
     
 def test_add_visotor():
