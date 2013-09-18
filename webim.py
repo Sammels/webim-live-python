@@ -116,7 +116,7 @@ class Client:
                 'domain': self.domain,
                 'ticket': respdata['ticket'],
                 'mqttd' : respdata['mqttd'],
-                'websocket': respdata['websocket'],
+                # 'websocket': respdata['websocket'],
                 'server': respdata['server']
             }
 
