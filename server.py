@@ -24,7 +24,7 @@ app.debug = DEBUG
 # ==============================================================================
 
 UNSUPPORTED_ENDPOINTS = ('download_history', 'settings') # Forbidden visitor user
-LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
+LOGIN_REQUIRED_ENDPOINTS = ('online', 'offline',
                             'message', 'presence', 'status',
                             'history', 'members', 'join', 'leave',
                             'buddies', 'rooms', 'refresh',
@@ -45,7 +45,7 @@ def prepare():
     
     data = request.cookies.get('auth', None)
     # For guest user
-    if request.endpoint == 'index':
+    if request.endpoint == 'init':
         if not data:
             g.uid = uuid.uuid1().get_hex()
             g.is_login = False
@@ -94,32 +94,8 @@ def prepare():
 @app.route('/')
 def index():
     ''' For guest user '''
+    return render_template('index.html')
     
-    resp = Response(render_template('index.html'))
-    
-    # Login for guest user
-    if not g.is_login:
-        # Save visotor to database
-        env = request.environ
-        ipaddr = env['REMOTE_ADDR']
-        signat = datetime.now().strftime(TIME_FORMAT)
-        referer = env.get('HTTP_REFERER', '')
-        url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
-                                            'path': env['PATH_INFO']}
-        loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
-        loc_json = json.loads(loc_str)
-        loc_data = loc_json['data']
-        location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
-        db.add_visitor(g.uid, VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
-
-        # Save uid to cookie
-        cookie = SecureCookie(secret_key=app.secret_key)
-        cookie['uid'] = g.uid
-        cookie['is_guest'] = True
-        cookie.save_cookie(resp, key='auth', max_age=VISITOR_COOKIE_AGE)
-    
-    return resp
-
     
 @app.route('/run.js')
 def init():
@@ -128,7 +104,7 @@ def init():
     title  = request.args.get('title', CONFIG['title'])
     theme  = request.args.get('theme', CONFIG['theme'])
     local  = request.args.get('local', CONFIG['local'])
-
+        
     is_login = ''
     user = '{}'
     if hasattr(g, 'uid'):
@@ -164,8 +140,8 @@ def init():
         min: window.location.href.indexOf("webim_debug") != -1 ? "" : ".min"
     };
     
-    _IMC.script = window.webim ? '' : ('<link href="%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><link href="%(site)s' + _IMC.path + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><script src="%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '" type="text/javascript"></script><script src="%(site)s' + _IMC.path + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '" type="text/javascript"></script>');
-    _IMC.script += '<script src="%(site)s' + _IMC.path + 'static/webim.js?' + _IMC.version + '" type="text/javascript"></script>';
+    _IMC.script = window.webim ? '' : ('<link href="http://%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><link href="http://%(site)s' + _IMC.path + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><script src="http://%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '" type="text/javascript"></script><script src="http://%(site)s' + _IMC.path + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '" type="text/javascript"></script>');
+    _IMC.script += '<script src="http://%(site)s' + _IMC.path + 'static/webim.js?' + _IMC.version + '" type="text/javascript"></script>';
     document.write( _IMC.script );''' % {
         'site'     : CONFIG['site'],
         'version'  : CONFIG['version'],
@@ -177,7 +153,30 @@ def init():
         'theme'    : theme,
         'local'    : local,
     }
-    return Response(js, content_type='text/javascript')
+    resp = Response(js, content_type='text/javascript')
+
+    # Login for guest user
+    if not g.is_login:
+        # Save visotor to database
+        env = request.environ
+        ipaddr = env['REMOTE_ADDR']
+        signat = datetime.now().strftime(TIME_FORMAT)
+        referer = env.get('HTTP_REFERER', '')
+        url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
+                                            'path': env['PATH_INFO']}
+        loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
+        loc_json = json.loads(loc_str)
+        loc_data = loc_json['data']
+        location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
+        db.add_visitor(g.uid, VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
+
+        # Save uid to cookie
+        cookie = SecureCookie(secret_key=app.secret_key)
+        cookie['uid'] = g.uid
+        cookie['is_guest'] = True
+        cookie.save_cookie(resp, key='auth', max_age=VISITOR_COOKIE_AGE)
+    
+    return resp
     
 
 @app.route('/login', methods=('POST', 'GET'))
