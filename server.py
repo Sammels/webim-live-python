@@ -272,12 +272,24 @@ def presence():
 #LATER:
 @app.route('/status', methods=('POST', 'GET'))
 def status():
-    return 'ok'
+    to = request.values.get('to', None)
+    show = request.values.get('show', None)
+    callback  = request.values.get('callback', None)
 
+    ret = json.dumps(g.client.status(to, show))
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
+
+    
 #LATER:    
 @app.route('/logmsg', methods=('POST', 'GET'))
 def logmsg():
-    return 'ok'
+    callback  = request.values.get('callback', None)
+    
+    ret = json.dumps({'status': 'ok'})
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
+
 
 
 @app.route('/history')
