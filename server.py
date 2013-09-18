@@ -7,35 +7,21 @@ import json
 from datetime import datetime
 
 from werkzeug.contrib.securecookie import SecureCookie
-from flask import Flask, request, Response, session, url_for, \
-    abort, redirect, g, render_template
+from flask import Flask, request, Response, abort, g, render_template
 
 from webim import Client
+from settings import SECRET_KEY, DEBUG, \
+    CONFIG, LOCATION_API_URL, VISOTOR_NICK_PREFX, VISITOR_COOKIE_AGE, USER_COOKIE_AGE, \
+    TIME_FORMAT, DATE_FORMAT
 import db
 
 app = Flask(__name__)
-app.secret_key = 'public'
-app.debug = True
+app.secret_key = SECRET_KEY
+app.debug = DEBUG
 
 # ==============================================================================
 #  Configurations
 # ==============================================================================
-CONFIG = {
-    'version' : '1.1',
-    'domain'  : 'localhost',
-    'apikey'  : 'public',
-    'host'    : 'next.im',      # IM server host
-    'port'    : 8000,           # IM server port
-    'title'   : '在线支持',    
-    'theme'   : 'redmond',
-    'local'   : 'zh-CN',
-}
-LOCATION_API_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip=%s'
-VISOTOR_NICK_PREFX = 'Guest-'
-VISITOR_COOKIE_AGE = 3600 * 24 * 7 # A week
-USER_COOKIE_AGE = 3600 * 24        # One day
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-DATE_FORMAT = '%Y-%m-%d'
 
 UNSUPPORTED_ENDPOINTS = ('download_history', 'settings') # Forbidden visitor user
 LOGIN_REQUIRED_ENDPOINTS = ('init', 'online', 'offline',
@@ -65,13 +51,20 @@ def prepare():
             g.is_login = False
         else:
             cookie = SecureCookie.unserialize(data, app.secret_key)
+            print 'index.cookie: ', cookie
             g.uid = cookie.get('uid', None)
-            g.is_login = True
+            
+            if g.uid is None:
+                g.uid = uuid.uuid1().get_hex()
+                g.is_login = False
+            else:
+                g.is_login = True
         
     elif request.endpoint in LOGIN_REQUIRED_ENDPOINTS:
         if data:
             # Get uid & ticket from cookie then new Client
             cookie = SecureCookie.unserialize(data, app.secret_key)
+            print '[...].cookie: ', cookie
             g.cookie = cookie
             g.uid = cookie.get('uid', None)
             g.is_login = True
@@ -297,6 +290,7 @@ def history():
                   'body': record['body'],
                   'timestamp': str(record['timestamp'])}
                  for record in records]
+    histories.reverse()
     
     return json.dumps(histories)
 

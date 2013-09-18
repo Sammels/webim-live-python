@@ -2,16 +2,12 @@
 #coding: utf-8
 
 import MySQLdb as mdb
+from settings import MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB, \
+    MYSQL_CHARSET, TABLE_PREFIX
 
 # ==============================================================================
 #  Globals
 # ==============================================================================
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASS = 'public'
-MYSQL_DB = 'shopim2'
-MYSQL_CHARSET = 'utf8'
-TABLE_PREFIX = 'shop_webim_'
 
 CURSORS = {
     'dict': 0,
@@ -102,6 +98,7 @@ def transaction(SQL_args_lst):
     
 def load_record(table, column, value):
     SQL = 'SELECT * FROM shop_webim_{0} WHERE `{1}`=%s'.format(table, column)
+    print 'load_record.SQL&column&value: ', SQL, column, value
     return load(SQL, value, fetch_one=True)
 
 def load_user(uid):
@@ -129,7 +126,7 @@ def load_groups(uid=None):
 def load_histories(msgtype, me, other):
     SQL = '''SELECT * FROM shop_webim_histories
     WHERE `type`=%s AND ((`from`=%s AND `to`=%s AND `fromdel`=0) OR (`from`=%s AND `to`=%s AND `todel`=0))
-    ORDER BY `timestamp` ASC
+    ORDER BY `timestamp` DESC
     LIMIT 20'''
     
     return load(SQL, (msgtype, me, other, other, me), fetch_one=False)
