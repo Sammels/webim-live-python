@@ -277,9 +277,6 @@ def presence():
     callback  = request.values.get('callback', None)
 
     ret = g.client.presence(show, status=status)
-    user = json.loads(ret)
-    user['pic_url'] = gravatar_url('')
-    ret = json.dumps(user)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
     resp = Response(ret)
     
