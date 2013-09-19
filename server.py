@@ -44,7 +44,13 @@ def prepare():
         abort(403)
     
     data = request.cookies.get('auth', None)
-    print 'cookie_data:', data
+    
+    print '========================================'
+    print '<<< %s >>>' % request.endpoint
+    print '[ %s <--> %s ]' % (str(request.args), str(request.values))
+    print 'cookie_data:', SecureCookie.unserialize(data, app.secret_key) if data is not None else 'None'
+    print '--------------------'
+
     # For guest user
     if request.endpoint == 'init':
         if not data:
@@ -71,16 +77,15 @@ def prepare():
             g.is_login = True
             g.is_guest = cookie.get('is_guest', None)
             show = cookie.get('show', 'available')
-            status = cookie.get('status', '')
 
-            record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
-            print 'request.endpoint != "login" ==> user_record: ', record
-            
+            g.record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
+            print 'request.endpoint != "login" ==> user_record: ', g.record
+
             user = {
                 'id' : g.uid,
-                'nick': record['nick'].encode('utf8'),
+                'nick': g.record['nick'].encode('utf8'),
                 'show': show,
-                'status' : status,
+                'status' : '',
                 'pic_url': 'http://www.gravatar.com/avatar/?s=50',
                 'default_pic_url': 'http://www.gravatar.com/avatar/?s=50'
             }
@@ -121,7 +126,7 @@ def init():
         
     path = 'http://%s/' % CONFIG['domain']
 
-    js = '''var _IMC = {
+    js = u'''var _IMC = {
         production_name: 'service',
         version: '%(version)s',
         domain: '%(domain)s',
@@ -184,8 +189,6 @@ def login():
     username = request.values.get('username', '')
     password = request.values.get('password', '')
 
-    print '[ %s <--> %s ]' % (str(request.args), str(request.values))
-
     ret_data = {}
     is_login = db.check_user(username, password)
     if is_login:
@@ -212,13 +215,17 @@ def online():
     room_ids  = request.values.get('room_ids', '')
     show      = request.values.get('show', 'available')
     callback  = request.values.get('callback', None)
-
+    visitorstatus = request.values.get('visitorstatus', '')
+    
     buddies = db.load_buddies() if g.is_guest else []
     groups = db.load_groups() if g.is_guest else []
 
     ret = g.client.online(buddies, groups, show)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
     resp = Response(ret)
+
+    status = visitorstatus if g.is_guest else g.record['status']
+    g.client.presence(status=status)
     
     return resp
     
@@ -312,7 +319,7 @@ def history():
                   'timestamp': str(record['timestamp'])}
                  for record in records]
     histories.reverse()
-    
+
     ret = json.dumps(histories)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
     return ret
@@ -351,10 +358,13 @@ def buddies():
     ids = request.values.get('ids')
     callback  = request.values.get('callback', None)
     buddies = []
+
+    
     # LATER:
     for _id in ids.split(','):
         record = db.load_user(_id) if g.is_guest else db.load_visitor(_id)
-        buddies.append({'id': _id, 'nick': record['nick']})
+        buddies.append({'id': _id,
+                        'nick': record['nick']})
 
     ret = json.dumps(buddies)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
@@ -407,4 +417,4 @@ def notifications():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8888)
+    app.run(host='0.0.0.0', port=8788)

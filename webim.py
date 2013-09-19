@@ -111,7 +111,7 @@ class Client:
             respdata = json.loads(body)
             print 'online.respdata: ', respdata
             print '========='
-            
+
             conninfo = {
                 'domain': self.domain,
                 'ticket': respdata['ticket'],
@@ -128,6 +128,7 @@ class Client:
                 b['pic_url'] = gravatar_url(email)
                 b['default_pic_url'] = GRAVATAR_DEFAULT_URL
                 
+            self.ticket = respdata['ticket']
             return json.dumps({'success': True,
                                'connection': conninfo,
                                'buddies': loaded_buddies,
@@ -143,7 +144,7 @@ class Client:
         status, body = self._httpost('/presences/offline', {})
         return body
 
-    def presence(self, show, status = ""):
+    def presence(self, show='available', status = ""):
         """
         Update Presence
         """
