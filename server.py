@@ -98,7 +98,12 @@ def prepare():
             g.is_guest = cookie.get('is_guest', None)
             show = cookie.get('show', 'available')
 
-            g.record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
+            if g.is_guest:
+                g.record = db.load_visitor(g.uid)
+                g.record['nick'] = '%s(%s)' % (g.record['nick'], g.record['location'])
+            else:
+                g.record = db.load_user(g.uid)
+                
             print 'g.record:', g.record
             pic_url = gravatar_url(g.record.get('email', ''))
 
@@ -139,6 +144,7 @@ def init():
     if g.is_login:
         is_login = '1'
         record = db.load_visitor(g.uid)
+        record['nick'] = '%s(%s)' % (record['nick'], record['location'])
         user = {
             'id' : g.uid,
             'nick': record['nick'],
@@ -269,6 +275,7 @@ def message():
     ret = g.client.message(to, body, style, timestamp, msgtype=msgtype)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
     return ret
+
     
 @app.route('/presence', methods=('POST', 'GET'))
 def presence():
@@ -373,7 +380,13 @@ def buddies():
     
     # LATER:
     for _id in ids.split(','):
-        record = db.load_user(_id) if g.is_guest else db.load_visitor(_id)
+        record = None
+        if g.is_guest:
+            record = db.load_user(_id)
+        else:
+            record = db.load_visitor(_id)
+            record['nick'] = '%s(%s)' % (record['nick'], record['location'])
+
         pic_url = gravatar_url(record.get('email', ''))
         buddies.append({'id': _id,
                         'nick': record['nick'],
