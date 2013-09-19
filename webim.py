@@ -125,6 +125,7 @@ class Client:
                 uid = b['name']
                 b['id'] = uid
                 email = buddy_dict[uid]['email']
+                b['status'] = buddy_dict[uid]['status']
                 b['pic_url'] = gravatar_url(email)
                 b['default_pic_url'] = GRAVATAR_DEFAULT_URL
                 
