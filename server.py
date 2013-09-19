@@ -46,7 +46,10 @@ def save_visitor(env):
     loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
     loc_json = json.loads(loc_str)
     loc_data = loc_json['data']
-    location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
+    country = '' if loc_data['country_id'] == 'CN' else loc_data['country']
+    region = '' if loc_data['region_id'] == loc_data['city_id'] else loc_data['region']
+    
+    location = '%s%s%s' % (country, region, loc_data['city'])
     return db.add_visitor(VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
 
 
