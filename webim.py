@@ -32,7 +32,8 @@ __license__   = "Python Software Foundation License"
 
 APIVSN = 'v5'
 AVATAR_SIZE = 50
-GRAVATAR_DEFAULT_URL = 'http://www.gravatar.com/avatar/00000000000000000000000000000000?s=' + str(AVATAR_SIZE)
+AVATAR_DEFAULT = 'identicon'
+GRAVATAR_DEFAULT_URL = 'http://www.gravatar.com/avatar/%s?s={0}&d={1}&f=y'.format(AVATAR_SIZE, AVATAR_DEFAULT)
 
 try:
     import json
@@ -54,10 +55,10 @@ class User:
         self.show = show
         self.status = status
 
-def gravatar_url(email):
-    if len(email.strip()) == 0:
-        return GRAVATAR_DEFAULT_URL
+def gravatar_default(uid):
+    return GRAVATAR_DEFAULT_URL % hashlib.sha1(uid).hexdigest()
         
+def gravatar_url(email):
     url = "http://www.gravatar.com/avatar/" + hashlib.md5(email.lower()).hexdigest() + "?"
     url += urllib.urlencode({'s':str(AVATAR_SIZE)})
     return url
@@ -127,7 +128,7 @@ class Client:
                 email = buddy_dict[uid]['email']
                 b['status'] = buddy_dict[uid]['status']
                 b['pic_url'] = gravatar_url(email)
-                b['default_pic_url'] = GRAVATAR_DEFAULT_URL
+                b['default_pic_url'] = gravatar_default(uid)
                 
             self.ticket = respdata['ticket']
             return json.dumps({'success': True,

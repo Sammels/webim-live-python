@@ -9,7 +9,7 @@ from datetime import datetime
 from werkzeug.contrib.securecookie import SecureCookie
 from flask import Flask, request, Response, abort, g, render_template
 
-from webim import Client, gravatar_url
+from webim import Client, gravatar_url, gravatar_default
 from settings import SECRET_KEY, DEBUG, \
     CONFIG, LOCATION_API_URL, VISOTOR_NICK_PREFX, VISITOR_COOKIE_AGE, USER_COOKIE_AGE, \
     TIME_FORMAT, DATE_FORMAT
@@ -98,22 +98,26 @@ def prepare():
             g.is_guest = cookie.get('is_guest', None)
             show = cookie.get('show', 'available')
 
+            record, nick, pic_url = None, None, None
             if g.is_guest:
-                g.record = db.load_visitor(g.uid)
-                g.record['nick'] = '%s(%s)' % (g.record['nick'], g.record['location'])
+                record = db.load_visitor(g.uid)
+                nick = '%s(%s)' % (record['nick'], record['location'])
+                pic_url = gravatar_default(g.uid)
             else:
-                g.record = db.load_user(g.uid)
+                record = db.load_user(g.uid)
+                nick = record['nick']
+                pic_url = gravatar_url(record['email'])
                 
+            g.record = record
             print 'g.record:', g.record
-            pic_url = gravatar_url(g.record.get('email', ''))
 
             user = {
                 'id' : g.uid,
-                'nick': g.record['nick'].encode('utf8'),
+                'nick': nick.encode('utf8'),
                 'show': show,
                 'status' : '',
                 'pic_url':  pic_url,
-                'default_pic_url': 'http://www.gravatar.com/avatar/?s=50'
+                'default_pic_url': gravatar_default(g.uid)
             }
             ticket = request.values.get('ticket', None)
             g.client = Client(user, CONFIG['domain'], CONFIG['apikey'],
@@ -227,8 +231,8 @@ def login():
 
 @app.route('/online', methods=('POST', 'GET'))
 def online():
-    buddy_ids = request.values.get('buddy_ids', '')
-    room_ids  = request.values.get('room_ids', '')
+    # buddy_ids = request.values.get('buddy_ids', '')
+    # room_ids  = request.values.get('room_ids', '')
     show      = request.values.get('show', 'available')
     callback  = request.values.get('callback', None)
     visitorstatus = request.values.get('visitorstatus', '')
@@ -380,17 +384,19 @@ def buddies():
     
     # LATER:
     for _id in ids.split(','):
-        record = None
+        nick, pic_url = None, None
         if g.is_guest:
             record = db.load_user(_id)
+            pic_url = gravatar_url(record['email'])
         else:
             record = db.load_visitor(_id)
-            record['nick'] = '%s(%s)' % (record['nick'], record['location'])
+            nick = '%s(%s)' % (record['nick'], record['location'])
+            pic_url = gravatar_default(_id)
 
-        pic_url = gravatar_url(record.get('email', ''))
-        buddies.append({'id': _id,
-                        'nick': record['nick'],
-                        'pic_url': pic_url})
+        buddy = {'id': _id,
+                 'nick': nick,
+                 'pic_url': pic_url}
+        buddies.append(buddy)
 
     ret = json.dumps(buddies)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
@@ -409,7 +415,7 @@ def refresh():
 @app.route('/clear_history', methods=('POST', 'GET'))
 def clear_history():
     other = request.values.get('id', None)
-    callback  = request.values.get('callback', None)
+    # callback  = request.values.get('callback', None)
     db.clear_histories(g.uid, other)
     return 'ok'
 
@@ -418,7 +424,7 @@ def clear_history():
 def download_history():
     _id = request.values.get('id', None)
     _type = request.values.get('type', 'chat')
-    callback  = request.values.get('callback', None)
+    # callback  = request.values.get('callback', None)
     
     now = datetime.now()
     today = now.strftime(DATE_FORMAT)
