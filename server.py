@@ -9,7 +9,7 @@ from datetime import datetime
 from werkzeug.contrib.securecookie import SecureCookie
 from flask import Flask, request, Response, abort, g, render_template
 
-from webim import Client
+from webim import Client, gravatar_url
 from settings import SECRET_KEY, DEBUG, \
     CONFIG, LOCATION_API_URL, VISOTOR_NICK_PREFX, VISITOR_COOKIE_AGE, USER_COOKIE_AGE, \
     TIME_FORMAT, DATE_FORMAT
@@ -99,14 +99,15 @@ def prepare():
             show = cookie.get('show', 'available')
 
             g.record = db.load_visitor(g.uid) if g.is_guest else db.load_user(g.uid)
-            print 'request.endpoint != "login" ==> user_record: ', g.record
+            print 'g.record:', g.record
+            pic_url = gravatar_url(g.record.get('email', ''))
 
             user = {
                 'id' : g.uid,
                 'nick': g.record['nick'].encode('utf8'),
                 'show': show,
                 'status' : '',
-                'pic_url': 'http://www.gravatar.com/avatar/?s=50',
+                'pic_url':  pic_url,
                 'default_pic_url': 'http://www.gravatar.com/avatar/?s=50'
             }
             ticket = request.values.get('ticket', None)
@@ -372,8 +373,10 @@ def buddies():
     # LATER:
     for _id in ids.split(','):
         record = db.load_user(_id) if g.is_guest else db.load_visitor(_id)
+        pic_url = gravatar_url(record.get('email', ''))
         buddies.append({'id': _id,
-                        'nick': record['nick']})
+                        'nick': record['nick'],
+                        'pic_url': pic_url})
 
     ret = json.dumps(buddies)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
