@@ -26,7 +26,6 @@ to_timestamp = lambda dt: str(float(dt.strftime('%s.%f'))*1000)
 #### SELECT ####
 def load(SQL, args, fetch_one=True, cursor_type=CURSORS['dict']):
     # print SQL, args
-    
     conn = mdb.connect(host=MYSQL_HOST,
                        user=MYSQL_USER, passwd=MYSQL_PASS,
                        db=MYSQL_DB, charset=MYSQL_CHARSET)
@@ -89,9 +88,12 @@ def transaction(SQL_args_lst):
     for SQL, args in SQL_args_lst:
         cursor.execute(SQL, args)
     conn.commit()
+    ret = cursor.fetchone()
     
     cursor.close()
     conn.close()
+
+    return ret
 
 ############################################################
 
@@ -142,14 +144,21 @@ def clear_histories(me, other):
     
 
 ## Insert ##
-def add_visitor(name, nick, ipaddr, signat, referer, url, location):
+def add_visitor(nick, ipaddr, signat, referer, url, location):
+    
     SQL1 = 'SELECT @A:=Auto_increment FROM information_schema.tables WHERE table_name=\'shop_webim_visitors\''
     args1 = None
     SQL2 = '''INSERT INTO shop_webim_visitors(`eid`, `name`, `nick`, `ipaddr`, `signat`,  `referer`, `url`, `location`)
-    VALUES(%s, %s, concat(%s, @A), %s, %s,  %s, %s, %s)'''
-    args2 = (10000, name, nick, ipaddr, signat, referer, url, location)
+    VALUES(%s, @A, concat(%s, @A), %s, %s,  %s, %s, %s)'''
+    args2 = (10000, nick, ipaddr, signat, referer, url, location)
+    SQL3 = 'SELECT @A'
     
-    transaction([(SQL1, args1), (SQL2, args2)])
+    ret = transaction([(SQL1, args1),
+                       (SQL2, args2),
+                       (SQL3, None)])
+    print 'db.vid::', ret[0]
+    
+    return ret[0]
     
     
 def add_message(msgtype,

@@ -32,6 +32,23 @@ LOGIN_REQUIRED_ENDPOINTS = ('online', 'offline',
                             'settings', 'notifications')
 
 
+# ==============================================================================
+#  Helper Functions
+# ==============================================================================
+def save_visitor(env):
+    # Save visotor to database
+    # env = request.environ
+    ipaddr = env['REMOTE_ADDR']
+    signat = datetime.now().strftime(TIME_FORMAT)
+    referer = env.get('HTTP_REFERER', '')
+    url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
+                                       'path': env['PATH_INFO']}
+    loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
+    loc_json = json.loads(loc_str)
+    loc_data = loc_json['data']
+    location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
+    return db.add_visitor(VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
+
 
 
 # ==============================================================================
@@ -39,30 +56,33 @@ LOGIN_REQUIRED_ENDPOINTS = ('online', 'offline',
 # ==============================================================================
 @app.before_request
 def prepare():
+    print '========================================'
+    print 'BEGIN prepare(%s) [%s]' % (request.endpoint, str(datetime.now()))
 
     if request.endpoint in UNSUPPORTED_ENDPOINTS:
         abort(403)
     
     data = request.cookies.get('auth', None)
-    
-    print '========================================'
-    print '<<< %s >>>' % request.endpoint
-    print '[ %s <--> %s ]' % (str(request.args), str(request.values))
-    print 'cookie_data:', SecureCookie.unserialize(data, app.secret_key) if data is not None else 'None'
-    print '--------------------'
+
+    if request.endpoint not in (None, 'static'):
+        print '<<< %s >>>' % request.endpoint
+        print '<< request.values:: %r >>' % request.values
+        print '<< cookie_data:: %r >>' % str(SecureCookie.unserialize(data, app.secret_key) if data is not None else 'None')
+        print '--------------------'
 
     # For guest user
     if request.endpoint == 'init':
         if not data:
-            g.uid = uuid.uuid1().get_hex()
+            vid = save_visitor(request.environ)
+            g.uid = str(vid)
             g.is_login = False
         else:
             cookie = SecureCookie.unserialize(data, app.secret_key)
-            print 'index.cookie: ', cookie
             g.uid = cookie.get('uid', None)
             
             if g.uid is None:
-                g.uid = uuid.uuid1().get_hex()
+                vid = save_visitor(request.environ)
+                g.uid = str(vid)
                 g.is_login = False
             else:
                 g.is_login = True
@@ -95,6 +115,8 @@ def prepare():
         else:
             print '403.request.endpoint:', request.endpoint
             abort(403)
+
+    print 'END prepare(%s) [%s]' % (request.endpoint, str(datetime.now()))
             
 
 @app.route('/')
@@ -160,22 +182,9 @@ def init():
     }
     resp = Response(js, content_type='text/javascript')
 
-    # Login for guest user
+    # Save uid to cookie
     if not g.is_login:
-        # Save visotor to database
-        env = request.environ
-        ipaddr = env['REMOTE_ADDR']
-        signat = datetime.now().strftime(TIME_FORMAT)
-        referer = env.get('HTTP_REFERER', '')
-        url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
-                                            'path': env['PATH_INFO']}
-        loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
-        loc_json = json.loads(loc_str)
-        loc_data = loc_json['data']
-        location = '%s%s%s' % (loc_data['country'], loc_data['region'], loc_data['city'])
-        db.add_visitor(g.uid, VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
-
-        # Save uid to cookie
+        print 'Save uid to cookie'
         cookie = SecureCookie(secret_key=app.secret_key)
         cookie['uid'] = g.uid
         cookie['is_guest'] = True
