@@ -44,6 +44,7 @@ def prepare():
         abort(403)
     
     data = request.cookies.get('auth', None)
+    print 'cookie_data:', data
     # For guest user
     if request.endpoint == 'init':
         if not data:
@@ -107,7 +108,7 @@ def init():
         
     is_login = ''
     user = '{}'
-    if hasattr(g, 'uid'):
+    if g.is_login:
         is_login = '1'
         record = db.load_visitor(g.uid)
         user = {
@@ -118,7 +119,7 @@ def init():
         }
         user = json.dumps(user)
         
-    path = '/'
+    path = 'http://%s/' % CONFIG['domain']
 
     js = '''var _IMC = {
         production_name: 'service',
@@ -136,14 +137,13 @@ def init():
         title: '%(title)s',
         theme: '%(theme)s',
         local: '%(local)s',
-        jsonp: '',
+        jsonp: '1',
         min: window.location.href.indexOf("webim_debug") != -1 ? "" : ".min"
     };
     
-    _IMC.script = window.webim ? '' : ('<link href="http://%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><link href="http://%(site)s' + _IMC.path + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><script src="http://%(site)s' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '" type="text/javascript"></script><script src="http://%(site)s' + _IMC.path + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '" type="text/javascript"></script>');
-    _IMC.script += '<script src="http://%(site)s' + _IMC.path + 'static/webim.js?' + _IMC.version + '" type="text/javascript"></script>';
+    _IMC.script = window.webim ? '' : ('<link href="' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><link href="' + _IMC.path + 'static/themes/' + _IMC.theme + '/jquery.ui.theme.css?' + _IMC.version + '" media="all" type="text/css" rel="stylesheet"/><script src="' + _IMC.path + 'static/webim.' + _IMC.production_name + _IMC.min + '.js?' + _IMC.version + '" type="text/javascript"></script><script src="' + _IMC.path + 'static/i18n/webim-' + _IMC.local + '.js?' + _IMC.version + '" type="text/javascript"></script>');
+    _IMC.script += '<script src="' + _IMC.path + 'static/webim.js?' + _IMC.version + '" type="text/javascript"></script>';
     document.write( _IMC.script );''' % {
-        'site'     : CONFIG['site'],
         'version'  : CONFIG['version'],
         'domain'   : domain,
         'path'     : path,
@@ -211,11 +211,13 @@ def online():
     buddy_ids = request.values.get('buddy_ids', '')
     room_ids  = request.values.get('room_ids', '')
     show      = request.values.get('show', 'available')
+    callback  = request.values.get('callback', None)
 
     buddies = db.load_buddies() if g.is_guest else []
     groups = db.load_groups() if g.is_guest else []
 
     ret = g.client.online(buddies, groups, show)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
     resp = Response(ret)
     
     return resp
@@ -234,6 +236,7 @@ def message():
     to_nick   = request.values.get('to_nick')
     body      = request.values.get('body')
     timestamp = request.values.get('timestamp')
+    callback  = request.values.get('callback', None)
     style     = ''
 
     print 'message.timestamp:', type(timestamp), timestamp
@@ -245,15 +248,20 @@ def message():
                    body, style, timestamp)
     
     body = body.encode('utf8')
-    return g.client.message(to, body, style, timestamp, msgtype=msgtype)
-    
+
+    ret = g.client.message(to, body, style, timestamp, msgtype=msgtype)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
     
 @app.route('/presence', methods=('POST', 'GET'))
 def presence():
     show   = request.values.get('show')
     status = request.values.get('status')
+    callback  = request.values.get('callback', None)
 
-    resp = Response(g.client.presence(show, status=status))
+    ret = g.client.presence(show, status=status)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    resp = Response(ret)
     g.cookie['show'] = show
     g.cookie['status'] = status
     g.cookie.save_cookie(resp, key='auth')
@@ -276,6 +284,7 @@ def logmsg():
 def history():
     _id = request.values.get('id', None)
     _type = request.values.get('type', None)
+    callback  = request.values.get('callback', None)
 
     records = db.load_histories(_type, g.uid, _id)
     # {to:36, nick:admin, from:admin,
@@ -292,36 +301,52 @@ def history():
                  for record in records]
     histories.reverse()
     
-    return json.dumps(histories)
-
+    ret = json.dumps(histories)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
 
 @app.route('/members')
 def members():
     room_id = request.values.get('id')
-    return g.client.members(room_id)
+    callback  = request.values.get('callback', None)
+
+    ret = g.client.members(room_id)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
 
 
 @app.route('/join', methods=('POST', 'GET'))
 def join():
     room_id = request.values.get('id')
-    return g.client.join(room_id)
+    callback  = request.values.get('callback', None)
 
+    ret = g.client.join(room_id)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
     
 @app.route('/leave', methods=('POST', 'GET'))
 def leave():
     room_id = request.values.get('id')
-    return g.client.leave(room_id)
+    callback  = request.values.get('callback', None)
+
+    ret = g.client.leave(room_id)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
 
     
 @app.route('/buddies')
 def buddies():
     ids = request.values.get('ids')
+    callback  = request.values.get('callback', None)
     buddies = []
     # LATER:
     for _id in ids.split(','):
         record = db.load_user(_id) if g.is_guest else db.load_visitor(_id)
         buddies.append({'id': _id, 'nick': record['nick']})
-    return json.dumps(buddies)
+
+    ret = json.dumps(buddies)
+    if callback is not None: ret = '%s(%s);' % (callback, ret)
+    return ret
 
     
 @app.route('/rooms')
@@ -336,6 +361,7 @@ def refresh():
 @app.route('/clear_history', methods=('POST', 'GET'))
 def clear_history():
     other = request.values.get('id', None)
+    callback  = request.values.get('callback', None)
     db.clear_histories(g.uid, other)
     return 'ok'
 
@@ -344,6 +370,7 @@ def clear_history():
 def download_history():
     _id = request.values.get('id', None)
     _type = request.values.get('type', 'chat')
+    callback  = request.values.get('callback', None)
     
     now = datetime.now()
     today = now.strftime(DATE_FORMAT)

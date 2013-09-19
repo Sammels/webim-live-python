@@ -1,6 +1,6 @@
 uwsgi: 
   pythonpath   : /usr/local/lib/python2.7/dist-packages/
-  pythonpath   : /home/weet/GitHub/webim-python
+  pythonpath   : /var/www/chat.nextalk.im/
   socket       : /tmp/uwsgi-chat.sock
   chmod-socket : 666
   callable     : app
@@ -9,5 +9,5 @@ uwsgi:
   workers      : 8
   threads      : 10
   idle         : 1800
-  logto        : /home/weet/GitHub/webim-python/var/logs/webim-uwsgi.log
-  static-map   : /static=/home/weet/GitHub/webim-python/static
+  logto        : /var/www/chat.nextalk.im/var/logs/webim-uwsgi.log
+  static-map   : /static=/var/www/chat.nextalk.im/static
