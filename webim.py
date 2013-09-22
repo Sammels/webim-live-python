@@ -40,6 +40,7 @@ try:
 except ImportError:
     import simplejson as json
 
+import time
 import urllib
 import urllib2
 import hashlib
@@ -136,7 +137,7 @@ class Client:
                                'buddies': loaded_buddies,
                                'groups': respdata['groups'], #groups
                                'rooms': respdata['groups'],
-                               'server_time': 100101, #FIXME:
+                               'server_time': int(time.time()*1000), #FIXME:
                                'user': self.user})
 
     def offline(self):

@@ -2284,6 +2284,7 @@ function date(time){
 };
 date.timeSkew = 0;
 date.init = function(serverTime){//设置本地时间和服务器时间差
+  // console.log('date.init = function(serverTime) :: ', (new Date()).getTime(), parseFloat(serverTime));
     date.timeSkew = (new Date()).getTime() - parseFloat(serverTime);
 };
 extend(date.prototype, {
