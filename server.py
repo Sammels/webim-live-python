@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #coding: utf-8
 
-import uuid
 import urllib2
 import json
 from datetime import datetime
@@ -116,7 +115,7 @@ def prepare():
 
             user = {
                 'id' : g.uid,
-                'nick': nick.encode('utf8'),
+                'nick': nick,
                 'show': show,
                 'status' : '',
                 'pic_url':  pic_url,
@@ -277,8 +276,6 @@ def message():
                    g.uid, frm_nick, to, to_nick,
                    body, style, timestamp)
     
-    body = body.encode('utf8')
-
     ret = g.client.message(to, body, style, timestamp, msgtype=msgtype)
     if callback is not None: ret = '%s(%s);' % (callback, ret)
     return ret

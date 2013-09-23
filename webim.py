@@ -45,17 +45,17 @@ import urllib
 import urllib2
 import hashlib
 
-class WebIMError(Exception):
-    pass
 
-class User:
 
-    def __init__(self, uid, nick, show, status):
-        self.uid = uid
-        self.nick = nick
-        self.show = show
-        self.status = status
-
+# ==============================================================================
+# Helpers
+# ==============================================================================
+def encode_utf8(data_dict):
+    for key, value in data_dict.iteritems():
+        if isinstance(value, unicode):
+            data_dict[key] = value.encode('utf8')
+    
+    
 def gravatar_default(uid):
     return GRAVATAR_DEFAULT_URL % hashlib.sha1(uid).hexdigest()
         
@@ -64,7 +64,10 @@ def gravatar_url(email):
     url += urllib.urlencode({'s':str(AVATAR_SIZE)})
     return url
 
-    
+
+# ==============================================================================
+#  
+# ==============================================================================    
 class Client:
     
     def __init__(self, user, domain, apikey,
@@ -237,6 +240,7 @@ class Client:
             params.update(self.reqdata_base)
             print 'GET.url:', url
             print 'GET.params: ', params
+            encode_utf8(params)
             url += "?" + urllib.urlencode(params)
             try:
                 if __debug__: print "GET %s" % url
@@ -256,6 +260,7 @@ class Client:
             data.update(self.reqdata_base)
             print 'POST.url:', url
             print 'POST.data:', data
+            encode_utf8(data)
             resp = urllib2.urlopen(url, urllib.urlencode(data), self.timeout)
             body = resp.read()
             if __debug__: print body
