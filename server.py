@@ -42,13 +42,17 @@ def save_visitor(env):
     referer = env.get('HTTP_REFERER', '')
     url = 'http://%(host)s%(path)s' % {'host': env['HTTP_HOST'],
                                        'path': env['PATH_INFO']}
-    loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
-    loc_json = json.loads(loc_str)
-    loc_data = loc_json['data']
-    country = '' if loc_data['country_id'] == 'CN' else loc_data['country']
-    region = '' if loc_data['region_id'] == loc_data['city_id'] else loc_data['region']
+    location = '[None]'
+    try:
+        loc_str = urllib2.urlopen(LOCATION_API_URL % ipaddr).read()
+        loc_json = json.loads(loc_str)
+        loc_data = loc_json['data']
+        country = '' if loc_data['country_id'] == 'CN' else loc_data['country']
+        region = '' if loc_data['region_id'] == loc_data['city_id'] else loc_data['region']
     
-    location = '%s%s%s' % (country, region, loc_data['city'])
+        location = '%s%s%s' % (country, region, loc_data['city'])
+    except Exception, e:
+        print e
     return db.add_visitor(VISOTOR_NICK_PREFX , ipaddr, signat, referer, url, location)
 
 
